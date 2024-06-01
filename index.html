@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Res Divider Solver</title>
+  <!--link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.min.css"-->
+  <link rel="stylesheet" href="ResDivSolve/jq/ui-1.11.4/themes/smoothness/jquery-ui.min.css">
+
+
+  <style type="text/css">
+   .no-close .ui-dialog-titlebar-close {
+     display: none;
+   }
+
+   .highlight-row {
+   		font-size: 1.1em;
+      font-weight: bold;
+    }
+
+   .half_page {
+      overflow-y:auto;
+      max-height:50vh;
+   }
+
+   .solv-tab table { 
+   		width: 100%; 
+   		border-collapse: collapse; 
+   }
+   	/* Zebra striping */
+   .solv-tab tr:nth-of-type(odd) { 
+   		background: #eee; 
+   }
+   .solv-tab th { 
+   		background: #333; 
+   		color: white; 
+   		font-weight: bold; 
+   }
+   .solv-tab td, .solv-tab th { 
+   		padding: 6px; 
+   		border: 1px solid #ccc; 
+   		text-align: left; 
+   }
+
+  </style>
+
+
+  <!--script src="http://code.jquery.com/jquery-1.10.2.min.js"></script-->
+  <!--script src="http://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script-->
+  <script src="ResDivSolve/jq/jquery-1.10.2.min.js"></script>
+  <script src="ResDivSolve/jq/ui-1.11.4/jquery-ui.min.js"></script>
+
+  <script src="ResDivSolve/jquery.tableSelect.js"></script>
+
+  <script src="ResDivSolve/res_div_msgs.js"> </script>
+  <script src="ResDivSolve/res_div_utils.js"> </script>
+  <script src="ResDivSolve/res_div_calc.js"> </script>
+  <script src="ResDivSolve/draw_lib.js"> </script>
+  <script src="ResDivSolve/res_div_visual.js"> </script>
+  <script src="ResDivSolve/res_div_values.js"> </script>
+  <script src="ResDivSolve/res_div_solver.js"> </script>
+
+</head>
+
+<body>
+<canvas id="c1" width="1" height="1"></canvas>
+
+<script>
+
+var GlobSetup = {
+  RPres:  5, // R Precision (in %)
+  RSet:   0, // R Set (1 - E96, 5 - E24, 0 - same as RPres)
+  MaxR:   2, // Maximum number of R in divider
+  R1Mode: 0,
+  R2Mode: 0,
+  ViewMode: 'Full',
+  ViewRows: 'All',
+  SolverT:  'Vout',
+  MaxRows: 100,
+
+  DrawLib: new DrawLib('c1')
+
+//  Solver: new TplNew()
+};
+
+$("#c1").click(function (event) 
+{
+  var id = GlobSetup.sch.Box.GetHitObj(event.offsetX,event.offsetY); 
+  if (id) ResDivChgType(id);
+}
+);
+
+var Data = new ResDisValues(
+ {
+    Rsrc:      0,         Rsrc_min:   0,         Rsrc_max:  0,         Rsrc_mode: 'Base',
+    Rdst:      Infinity,  Rdst_min:   Infinity,  Rdst_max:  Infinity,  Rdst_mode: 'Base'
+});
+
+GlobSetup.Data = Data;
+
+</script>
+
+<div id="accordeon">
+
+ <h3>Global setup / Solver</h3>
+ <div>
+ <table border=0>
+ <tr><td>Table view mode:<td><select id="setup-view-mode"></select></tr>
+ <tr><td>Table rows:     <td><select id="setup-view-rows"></select></tr>
+ <tr><td>Resistors:      <td><select id="setup-res-mode"><option value="0">5% (E24)</option> <option value="1">1% (E96)</option> <option value="2">1% (E24)</option></select></tr>
+ <tr id="setup-visible-1"><td>Maximum number of resistors:<td><input id="setup-maxres" value="2"></tr>
+ <tr id="setup-visible-2"><td>R1 configuration:<td><select id="setup-R1"></select></tr>
+ <tr id="setup-visible-3"><td>R2 configuration:<td><select id="setup-R2"></select></tr>
+ <tr><td>Solver Target:  <td><b id="setup-solver-T"></b></tr>
+ <tr><td>Maximum Solutions: <td><input id="setup-maxrows" value="100"></tr>
+ <tr><td colspan=2><input type='button' value="Run Solver" onclick="RunSolver()"></tr>
+ </table>
+ </div>
+
+ <h3>Values table</h3>
+ <div id='ResDivTable' class="half_page"></div>
+
+ <h3>Last solution</h3>
+ <div id="sol-res" class="half_page">
+ No solution active yet!
+ </div>
+
+</div>
+
+<!-- Value setup dialog -->
+<div id="dialog-sel">
+  <div id="dlg-msg"></div>
+  <div id="dlg-mode">
+    <ul>
+      <div><center>Component Selection Mode</center></div>
+      <li><a href="#dlg-none" id="dlg-mode-base-ref-1">Undefined</a></li>
+      <li><a href="#dlg-allR" id="dlg-mode-base-ref-2">Base</a></li>
+      <li><a href="#dlg-all"  id="dlg-mode-base-ref-3">Restricted</a></li>
+      <li><a href="#dlg-ro"   id="dlg-mode-base-ref-4">Derived</a></li>
+    </ul>
+
+    <div id="dlg-none">
+    </div>
+
+    <div id="dlg-all">
+      <table border=0 width="100%">
+        <tr>
+          <th>Value:
+          <td>
+          <td widh="100%"><input id="dlg-all-value" type="text" style="width:100%">
+          <td><select id="dlg-all-value-type"></select>
+        </tr>
+
+        <tr>
+          <th>Min:
+          <td><span id="dlg-all-min-sgn">-</span>
+          <td><input id="dlg-all-min" type="text" style="width:100%">
+          <td><select id="dlg-all-min-type"></select>
+          <td><select id="dlg-all-min-var">
+              <option value="abs">abs</option>
+              <option value="delta">delta</option>
+              <option value="%" selected >%</option>
+            </select>
+        </tr>
+
+        <tr>
+          <th>Max:
+          <td><span id="dlg-all-max-sgn">+</span>
+          <td><input id="dlg-all-max" type="text" style="width:100%">
+          <td><select id="dlg-all-max-type"></select>
+          <td><select id="dlg-all-max-var">
+              <option value="abs">abs</option>
+              <option value="delta">delta</option>
+              <option value="%">%</option>
+              <option value="Same as Min" selected >Same as Min</option>
+            </select>
+        </tr>
+      </table>
+    </div>
+
+    <div id="dlg-allR">
+      <table border=0 width="100%">
+        <tr>
+          <th>Value:
+          <td>
+          <td widh="100%">
+            <ul id="dlg-allR-value" style="width: 100px">
+              <li><span id="dlg-allR-value-text">10.4K</span>
+               <ul id="dlg-allR-tables"></ul>
+              </li>
+            </ul>
+        </tr>
+
+        <tr>
+          <th>Min:
+          <td><span id="dlg-allR-min-sgn">-</span>
+          <td><input id="dlg-allR-min" type="text" style="width:100%">
+          <td><select id="dlg-allR-min-type"></select>
+          <td><select id="dlg-allR-min-var">
+              <option value="abs">abs</option>
+              <option value="delta">delta</option>
+              <option value="%" selected >%</option>
+            </select>
+        </tr>
+
+        <tr>
+          <th>Max:
+          <td><span id="dlg-allR-max-sgn">+</span>
+          <td><input id="dlg-allR-max" type="text" style="width:100%">
+          <td><select id="dlg-allR-max-type"></select>
+          <td><select id="dlg-allR-max-var">
+              <option value="abs">abs</option>
+              <option value="delta">delta</option>
+              <option value="%">%</option>
+              <option value="Same as Min" selected >Same as Min</option>
+            </select>
+        </tr>
+      </table>
+    </div>
+
+    <div id="dlg-ro">
+      <table border=0 width="100%">
+        <tr>
+          <th width=1>Value:
+          <td widh="100%"><span id="dlg-ro-value">???</span>
+        </tr>
+
+        <tr>
+          <th>Min:
+          <td><span id="dlg-ro-min">???</span>
+        </tr>
+
+        <tr>
+          <th>Max:
+          <td><span id="dlg-ro-max">???</span>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+
+  <p>
+  <div>Use as Solver target&nbsp;<input id="dlg-solv-target" type="checkbox"></input></div>
+  <p>
+  <div id="dlg-message">Message ... </div>
+
+</div>
+<!-- End of Value setup dialog -->
+
+<!-- Solution list dialog -->
+<div id="dialog-sol">
+ <div id="dlg-sol-body"></div>
+</div>
+<!-- End of Solution list dialog -->
+
+<!-- Progress dialog -->
+<div id="dialog-wait">
+ <div id="dlg-wait-progress"></div>
+</div>
+<!-- End of Progress dialog -->
+
+
+<script src="ResDivSolve/res_div_setup.js"></script>
+
+<script>
+
+$( "#dialog-sol" ).dialog({ 
+  width:    500,
+  height:   600,
+  autoOpen: false,
+//  modal:    true,
+  show:     'slide',
+  hide:     'slide',
+  title:    'Solution',
+  buttons: [
+    {
+      text: "Close",
+      icons: {primary: "ui-icon-heart"},
+      click: function() {$( this ).dialog( "close" );}
+    }
+  ]
+});
+
+
+SetupMgr.init();
+
+function ResDivChgType(id)
+{
+  RDDlg.Open(id);
+}
+
+function RunSolver()
+{
+  var s = new Solver();
+  GlobSetup.SolverManger = s;
+
+  if (!s.RunCheck()) return;
+
+  var last_func = function()
+  {
+    if (!GlobSetup.SolverManger.RunDone())
+    {
+      delete GlobSetup.SolverManger;
+      return;
+    }
+    var tbl = GlobSetup.SolverManger.CreaTable()+"</table>";
+    $("#sol-res").html("<table id='slv-table-1' class='solv-tab' tabindex='0'>"+tbl);
+    $("#slv-table-1").tableSelectOne({
+    listeners: { afterrowselect: function (event, table) {SolvFocus(table.getFocusedRowIndex());} } });
+
+    $("#dlg-sol-body").html("<table id='slv-table-2' class='solv-tab' tabindex='0'>"+tbl);
+    $("#slv-table-2").tableSelectOne({
+    listeners: { afterrowselect: function (event, table) {SolvFocus(table.getFocusedRowIndex());} } });
+    $( "#dialog-sol" ).dialog('open');
+  };
+
+  if (GlobSetup.RModeIndex < 2)
+  {
+    if (!s.RunPrepare()) return;
+    s.RunStep();
+    last_func();
+  }
+  else
+  {
+    var ONE_STEP = 20;
+    var wd = new WaitDlg(100,'Finding Solution',true);
+    
+    var step_func = function() {
+      if (GlobSetup.SolverManger.RunStep(ONE_STEP)) {window.setTimeout(step_func,1); wd.Inc();}
+      else {last_func(); wd.Done();}
+    };
+    
+    window.setTimeout(function()
+    {
+      if (!s.RunPrepare()) {wd.Done(); return;}
+      var steps = Math.ceil(s.TotalSteps()/ONE_STEP);
+      wd.SetMax(steps);
+      window.setTimeout(step_func,1);
+    },1);
+  }
+}
+
+function SolvFocus(index)
+{
+  if (!('SolverManger' in GlobSetup)) return;
+  GlobSetup.SolverManger.SetupSolution(index);
+  NewDataAvail();
+}
+
+function NewDataAvail()
+{
+  GlobSetup.DrawLib.Clear();
+  GlobSetup.r1 = NewDrawRes(GlobSetup.R1Mode,'R1');
+  GlobSetup.r2 = NewDrawRes(GlobSetup.R2Mode,'R2');
+  GlobSetup.Solver = new TplNew(GlobSetup.r1,GlobSetup.r2);
+  GlobSetup.Solver.InitFromData();
+  GlobSetup.Solver.PutBackToData(true);
+  $("#ResDivTable").html((new ResDivTable(GlobSetup.ViewMode,GlobSetup.ViewRows,Data)).Table());
+  GlobSetup.sch = new ResDiv(GlobSetup.DrawLib, Data, GlobSetup.r1.Box(), GlobSetup.r2.Box());
+  GlobSetup.sch.Draw();
+
+  $("#setup-solver-T").html(GlobSetup.SolverT || "<I>(Not set)</I>");
+}
+
+SetupMgr.on_change();
+
+</script>
+
+<script src="ResDivSolve/res_div_dlg.js"> </script>
+
+</html>
