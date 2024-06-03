@@ -124,6 +124,32 @@ GlobSetup.Data = Data;
  No solution active yet!
  </div>
 
+ <h3>Help</h3>
+ <div id="help-pane" class="half_page">
+    You can configure values for any circuit components. You can do this by clicking the corresponding value in the diagram or through the table of all components (2nd tab in the accordion).
+    In the table, you must click the button in the first column of the corresponding parameter. (Table has more parameters than schematic).
+    Each value has a tolerance (in absolute or relative form).
+    The system automatically evaluates all parameters that directly follow from those already known.<p>
+
+    Each parameter value can take one of 4 forms.
+    <ol>
+        <li><b>Undefined</b>. No value provided or derived.
+        <li><b>Basic</b>. The value is assigned manually and used for further evaluation.
+        <li><b>Restricted</b>. The value was derived from others and some restrictions were applied to it. This type of parameter is used in Solver.
+        <li><b>Derived</b>. The value was derived from others.
+    </ol>
+    If a constrained parameter violates restrictions, it is highlighted in the schema and table.<p>
+
+    You can also click the "Solve" button. The system will attempt to select resistor values to resolve the restricted parameter that was marked "Use as Solver Target".<p>
+
+    It will produce a list of possible solutions (in increasing order of deviation of the target parameter value from the required one).
+    If a solution does not exist (due to a constraint violation), the system will display an error window and provide a brife list of solutions with violations.<p>
+
+    Supports a system using multiple resistors in each branch. Just set the resistors as "1% E24".
+    Next, select the maximum number of resistors and the desired connection diagram.<p>
+ </div>
+
+
 </div>
 
 <!-- Value setup dialog -->
