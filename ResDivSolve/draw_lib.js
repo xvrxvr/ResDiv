@@ -21,8 +21,6 @@ var DrawDims = {
   DASH:     [5,5]
 };
 
-const main_color = window.matchMedia("(prefers-color-scheme: dark)").matches ? "white" : "black";
-
 var DrSels = {
   N:  {},
   B:  {F: 'bold'},  // Base
@@ -38,19 +36,32 @@ function DrawLib(c_name)
 {
   this.Canvas = document.getElementById(c_name);
   this.ctx    = this.Canvas.getContext("2d");
+  this.dark_mode = test_dark_mode();
 
   this.x = 0;
   this.y = 0;
 }
 
+function test_dark_mode()
+{
+    try { return window.matchMedia("(prefers-color-scheme: dark)").matches;} catch(e) {return false;}
+}
 
 DrawLib.prototype = {
+
+  main_color: function() {return this.dark_mode ? "white" : "black";},
+  bg_color: function() {return this.dark_mode ? "black" : "white";},
 
   Goto: function(x,y) {if (typeof(x) == 'object') {this.x=x.x; this.y=x.y;} else {this.x=x; this.y=y;}},
   Get:  function()  {return {x:this.x,y:this.y};},
   Put:  function(v) {this.x=v.x; this.y=v.y;},
 
-  Clear: function() {this.ctx.clearRect(0, 0, this.Canvas.width, this.Canvas.height);},
+  Clear: function() 
+  {
+    this.ctx.fillStyle = this.bg_color();
+    this.ctx.strokeStyle = this.main_color();
+    this.ctx.fillRect(0, 0, this.Canvas.width, this.Canvas.height);
+  },
 
 ////////////////////////////////
   Join: function()
@@ -282,7 +293,7 @@ DrawLib.prototype = {
     if (!(sel in DrSels)) sel=sel[0];
     sel = DrSels[sel] || {};
     this.ctx.font = (sel.F || '')+' '+font;
-    this.ctx.fillStyle = sel.S || main_color;
+    this.ctx.fillStyle = sel.S || this.main_color();
   },
 
   Text: function(text, align, x, y, font)
@@ -301,7 +312,7 @@ DrawLib.prototype = {
       this.ctx.fillText(l[1],x,y);
       y+=/*this.ctx.measureText(l).height*/12+DrawDims.TXT_GAP;
     }
-    this.ctx.fillStyle = main_color;
+    this.ctx.fillStyle = this.main_color();
   },
 
   TextBox: function(text, font)
@@ -330,7 +341,7 @@ DrawLib.prototype = {
       h+=/*s.height*/12+DrawDims.TXT_GAP;
       if (w<s.width) w=s.width;
     }
-    this.ctx.fillStyle = main_color;
+    this.ctx.fillStyle = this.main_color();
     if (h) h-=DrawDims.TXT_GAP;
     return {w:w, h:h, ll:ll, ID: /^([\w.]+)/.exec(line0)[1]};
   }

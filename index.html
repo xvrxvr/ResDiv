@@ -89,6 +89,12 @@ $("#c1").click(function (event)
 }
 );
 
+$("#c1")[0].addEventListener("mousemove", function(event) {
+  var id = GlobSetup.sch.Box.GetHitObj(event.offsetX,event.offsetY);
+  $("#c1")[0].style.cursor = id ? "pointer" : "auto"; 
+});
+
+
 var Data = new ResDisValues(
  {
     Rsrc:      0,         Rsrc_min:   0,         Rsrc_max:  0,         Rsrc_mode: 'Base',
@@ -112,6 +118,7 @@ GlobSetup.Data = Data;
  <tr id="setup-visible-3"><td>R2 configuration:<td><select id="setup-R2"></select></tr>
  <tr><td>Solver Target:  <td><b id="setup-solver-T"></b></tr>
  <tr><td>Maximum Solutions: <td><input id="setup-maxrows" value="100"></tr>
+ <tr><td>Dark mode: <td><input id="select-dark-mode" type="checkbox" onclick="update_dark_mode()"></tr>
  <tr><td colspan=2><input type='button' value="Run Solver" onclick="RunSolver()"></tr>
  </table>
  </div>
@@ -386,6 +393,18 @@ function NewDataAvail()
 
   $("#setup-solver-T").html(GlobSetup.SolverT || "<I>(Not set)</I>");
 }
+
+function update_dark_mode()
+{
+    let dark_mode = $("#select-dark-mode")[0].checked;
+    if (GlobSetup.DrawLib.dark_mode != dark_mode)
+    {
+        GlobSetup.DrawLib.dark_mode = dark_mode;
+        NewDataAvail();
+    }
+}
+
+$("#select-dark-mode")[0].checked = GlobSetup.DrawLib.dark_mode;
 
 SetupMgr.on_change();
 

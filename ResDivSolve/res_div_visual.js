@@ -69,6 +69,7 @@ ResDiv.prototype = {
 
     if (this.self.Canvas.width <= box.w) this.self.Canvas.width = box.w+1;
     /*if (this.self.Canvas.height <= box.h+2*this._DY)*/ this.self.Canvas.height = box.h+2*this._DY+1;
+    this.self.Clear();
 
     this.Box = box;
 
