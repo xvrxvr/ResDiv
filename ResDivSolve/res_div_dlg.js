@@ -30,7 +30,7 @@ var RDDlg = {
       }
     }
 
-    if (CompID[0]=='R')
+    if (/^R\d/.exec(CompID) !== null)
     {
       $("#dlg-mode-base-ref-2").attr('href',"#dlg-allR");
       var d = GlobSetup.RPres == 5 ? [Utils.e24,2,4] : [Utils.e96,3,8];
@@ -48,6 +48,7 @@ var RDDlg = {
         case 'V': this.set_units(['V','mV','\u03BCV']); break;
         case 'I': this.set_units(['A','mA','\u03BCA']); break;
         case 'P': this.set_units(['W','mW','\u03BCW']); break;
+        case 'R': this.set_units(['\u2126', 'K\u2126', 'M\u2126']); break;
         default:  this.set_units(); break;
       }
     }
@@ -219,7 +220,7 @@ var RDDlg = {
     $("#dlg-message").html(msg);
     switch(page_idx)
     {
-      case 1: if (this.cur_comp_id[0]=='R') this.fill_tab_page_allR();
+      case 1: if (/^R\d/.exec(this.cur_comp_id) !== null) this.fill_tab_page_allR();
               else this.fill_tab_page_all();
               break;
       case 2: this.fill_tab_page_all(); break;
@@ -254,11 +255,16 @@ var RDDlg = {
     var dec = Utils.val2str(this.cur_comp_id,val);
     $("#"+id).prop('value',dec.V);
     $("#"+id).prop('disabled',!isFinite(val));
-    if (this.cur_comp_id[0]=='K') return;
+    if (this.cur_comp_id[0]=='K' || dec.S == '\u221E') return;
     var opts = $("#"+id+"-type option[value='"+dec.S+"']");
     if (opts.length == 0 && dec.S == '')
     {
       opts = $("#"+id+"-type option[value='\u03A9']");
+      if (opts.length == 0) opts = $("#"+id+"-type option[value='\u2126']");
+    }
+    else if (opts.length == 0)
+    {
+        opts = $("#"+id+"-type option[value="+dec.S + '\u2126' +"]");
     }
     if (opts.length == 0) alert("Can't find suffix '"+dec.S+"' in drop down box");
     else opts.prop('selected',"1");
@@ -323,7 +329,7 @@ var RDDlg = {
   {
     switch(page_idx)
     {
-      case 1: if (this.cur_comp_id[0]=='R') this.back_tab_page_allR();
+      case 1: if (/^R\d/.exec(this.cur_comp_id) !== null) this.back_tab_page_allR();
               else this.back_tab_page_all();
               break;
       case 2: this.back_tab_page_all(); break;
@@ -378,7 +384,7 @@ var RDDlg = {
 
   back_tab_page_allR: function(skp)
   {
-    this.cur_obj.val = Utils.str2val($("#dlg-allR-value-text").text());
+    this.cur_obj.val = Utils.str2val($("#dlg-allR-value-text").text(), '', true);
     this.back_vals_range("dlg-allR",skp);
     this.postpr_back();
   },

@@ -22,6 +22,16 @@ Solver.prototype = {
       alert("Solver: No restriction found for target '"+GlobSetup.SolverT+"'"); 
       return false;
     }
+    if (GlobSetup.Data[GlobSetup.SolverT] == GlobSetup.Data[GlobSetup.SolverT+"_min"] && GlobSetup.Data[GlobSetup.SolverT] == GlobSetup.Data[GlobSetup.SolverT+"_max"])
+    {
+      alert("Zero tolerance for Target will never lead to any solution.\nTolerance set to " + GlobSetup.RPres + "%");
+      let val = GlobSetup.Data[GlobSetup.SolverT];
+      let pres = GlobSetup.RPres / 100;
+      GlobSetup.Data[GlobSetup.SolverT+"_max"] = val * (1+pres);
+      GlobSetup.Data[GlobSetup.SolverT+"_min"] = val * (1-pres);
+      GlobSetup.Data[GlobSetup.SolverT+"_min_type"] = "%";
+      GlobSetup.Data[GlobSetup.SolverT+"_max_type"] = "Same as Min";
+    }
 
     this.K1K2 = this.new_tpl_solver('R2',GlobSetup.SolverT); // R1+R2 => Target
     if (this.K1K2 === null) return false;
@@ -192,7 +202,7 @@ Solver.prototype = {
         var res = [];
         if (acc_less_tgt !== false) res.push(acc_less_tgt);
         if (acc_greater_tgt !== false) res.push(acc_greater_tgt);
-        alert("No solution found!\nThere are best results with target restriction violation");
+        alert("No solution found!\nInput/output values and tolerances made a solution impossible.\nThere are best results with target restriction violation");
         this.solution = {S:res, M:3, A:"broken target"};
         return true;
       }

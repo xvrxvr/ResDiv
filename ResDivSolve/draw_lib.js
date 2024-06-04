@@ -21,6 +21,7 @@ var DrawDims = {
   DASH:     [5,5]
 };
 
+const main_color = window.matchMedia("(prefers-color-scheme: dark)").matches ? "white" : "black";
 
 var DrSels = {
   N:  {},
@@ -281,7 +282,7 @@ DrawLib.prototype = {
     if (!(sel in DrSels)) sel=sel[0];
     sel = DrSels[sel] || {};
     this.ctx.font = (sel.F || '')+' '+font;
-    this.ctx.fillStyle = sel.S || 'black';
+    this.ctx.fillStyle = sel.S || main_color;
   },
 
   Text: function(text, align, x, y, font)
@@ -300,7 +301,7 @@ DrawLib.prototype = {
       this.ctx.fillText(l[1],x,y);
       y+=/*this.ctx.measureText(l).height*/12+DrawDims.TXT_GAP;
     }
-    this.ctx.fillStyle = 'black';
+    this.ctx.fillStyle = main_color;
   },
 
   TextBox: function(text, font)
@@ -329,7 +330,7 @@ DrawLib.prototype = {
       h+=/*s.height*/12+DrawDims.TXT_GAP;
       if (w<s.width) w=s.width;
     }
-    this.ctx.fillStyle = 'black';
+    this.ctx.fillStyle = main_color;
     if (h) h-=DrawDims.TXT_GAP;
     return {w:w, h:h, ll:ll, ID: /^([\w.]+)/.exec(line0)[1]};
   }

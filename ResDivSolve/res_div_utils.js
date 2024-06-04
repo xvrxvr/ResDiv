@@ -49,11 +49,13 @@ var Utils = {
   // Convert string repr to value
   // val - Input string (with possible suffix)
   // suf - Optional suffix
-  str2val:  function(val,suf)
+  str2val:  function(val,suf,r_dialog)
   {
     if (typeof(suf) == 'undefined') suf='';
     suf=$.trim(suf);
     val=$.trim(val);
+
+    const lower_ohm = '\u2126'.toLowerCase();
 
     if (suf=='\u03A9') suf=''; else
     if (suf=='\u221E') return Infinity;
@@ -72,6 +74,8 @@ var Utils = {
         case 'mka': case 'ua': suf2='\u03BCa'; break;
         case 'mkv': case 'uv': suf2='\u03BCv'; break;
         case 'mkw': case 'uw': suf2='\u03BCw'; break;
+        case 'k': if (!r_dialog) suf2='K\u2126'; break;
+        case 'm': if (!r_dialog) suf2='M\u2126'; break;
       }
     }
 
@@ -82,7 +86,7 @@ var Utils = {
     if (suf.length==1)
       switch(suf)
       {
-        case 'v': case 'a': case 'w': break;
+        case 'v': case 'a': case 'w': case lower_ohm: break;
         case 'k': val *= 1000; break;
         case 'm': val *= 1000000; break;
         default: alert("Unknown suffix '"+suf+"'"); break;
@@ -90,8 +94,9 @@ var Utils = {
     else if (suf.length>1)
       switch(suf[0])
       {
-        case 'm': val /=1000; break;
+        case 'm': if (!r_dialog  && suf[1] == lower_ohm) val *= 1000000; else val /=1000; break;
         case '\u03BC': val /= 1000000; break;
+        case 'k': if (!r_dialog) val *= 1000; break;
         default: alert("Unknown suffix '"+suf+"'"); break;
       }
     return val;
